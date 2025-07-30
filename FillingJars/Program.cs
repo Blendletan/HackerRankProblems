@@ -15,27 +15,25 @@
     using System;
     class JarArray
     {
-        readonly int length;
-        int[] jars;
+        readonly Int128 length;
+        Int128 totalCandies;
         public JarArray(int n)
         {
             length = n;
-            jars = new int[length];
+            totalCandies = 0;
         }
         public void Fill(List<int> input)
         {
-            int startIndex = input[0] - 1;
-            int endIndex = input[1] - 1;
+            int startIndex = input[0];
+            int endIndex = input[1];
+            int numberOfJarsToFill = endIndex - startIndex + 1;
             int amountToFill = input[2];
-            for (int i = startIndex; i <= endIndex; i++)
-            {
-                jars[i] += amountToFill;
-            }
+            Int128 totalAmountToAdd = amountToFill * numberOfJarsToFill;
+            totalCandies += totalAmountToAdd;
         }
-        public int Average()
+        public Int128 Average()
         {
-            double average = jars.Average();
-            return (int)average;
+            return totalCandies / length;
         }
     }
     class Result
@@ -48,14 +46,15 @@
          *  1. INTEGER n
          *  2. 2D_INTEGER_ARRAY operations
          */
-        public static int solve(int n, List<List<int>> operations)
+        public static Int128 solve(int n, List<List<int>> operations)
         {
             JarArray myArray = new JarArray(n);
             foreach (var o in operations)
             {
                 myArray.Fill(o);
             }
-            return myArray.Average();
+            Int128 output = myArray.Average();
+            return output;
         }
     }
     internal class Program
@@ -70,7 +69,7 @@
             {
                 operations.Add(Console.ReadLine().TrimEnd().Split(' ').ToList().Select(operationsTemp => Convert.ToInt32(operationsTemp)).ToList());
             }
-            int result = Result.solve(n, operations);
+            Int128 result = Result.solve(n, operations);
             Console.WriteLine(result);
         }
     }

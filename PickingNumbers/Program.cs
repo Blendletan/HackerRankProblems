@@ -1,5 +1,6 @@
 ﻿namespace PickingNumbers
 {
+    using System.Diagnostics;
     using System.CodeDom.Compiler;
     using System.Collections.Generic;
     using System.Collections;
@@ -23,31 +24,64 @@
          */
         public static int pickingNumbers(List<int> a)
         {
-            int maxLength = 0;
-            for (int i = 0; i < a.Count; i++)
+            List<List<int>> validSubsets = Subsets(a);
+            int currentMax = 0;
+            foreach (var nextSubset in validSubsets)
             {
-                int length = 1;
-                int previousNumber = a[i];
-                for (int j = i + 1; j < a.Count; j++)
+                int length = nextSubset.Count;
+                if (length > currentMax)
                 {
-                    int nextDifference = a[j] - previousNumber;
-                    if (nextDifference <= 1 && nextDifference >= -1)
-                    {
-                        length++;
-                        previousNumber = a[j];
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                if (length > maxLength)
-                {
-                    maxLength = length;
+                    currentMax = length;
                 }
             }
-            return maxLength;
+            return currentMax;
         }
+        private static List<List<int>> Subsets(List<int> input)
+        {
+            int length = input.Count;
+            List<List<int>> subsets = new List<List<int>>();
+            subsets.Add(new List<int>());
+            int index = 0;
+            foreach (var nextInteger in input)
+            {
+                List<List<int>> toAddToCollection = new List<List<int>>();
+                foreach (var previousSubset in subsets)
+                {
+                    List<int> newSubset = new List<int>(previousSubset);
+                    newSubset.Add(nextInteger);
+                    if (IsValid(newSubset))
+                    {
+                        toAddToCollection.Add(newSubset);
+                    }
+                }
+                foreach (var newSubset in toAddToCollection)
+                {
+                    subsets.Add(newSubset);
+                }
+                index++;
+            }
+            return subsets;
+        }
+        private static bool IsValid(List<int> input)
+        {
+            int length = input.Count;
+            if (length <= 1)
+            {
+                return true;
+            }
+            for (int i = 1; i < length; i++)
+            {
+                int current = input[i];
+                int previous = input[i - 1];
+                int gap = current - previous;
+                if (gap != 1 && gap != -1 && gap != 0)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
     }
     internal class Program
     {
@@ -55,8 +89,12 @@
         {
             int n = Convert.ToInt32(Console.ReadLine().Trim());
             List<int> a = Console.ReadLine().TrimEnd().Split(' ').ToList().Select(aTemp => Convert.ToInt32(aTemp)).ToList();
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             int result = Result.pickingNumbers(a);
+            sw.Stop();
             Console.WriteLine(result);
+            Console.WriteLine($"{sw.ElapsedMilliseconds} milliseconds");
         }
     }
 }
