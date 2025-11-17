@@ -28,19 +28,17 @@
     internal class DieHardSolver
     {
         List<string> previousStates;
-        List<DieHard> currentStates;
-        public readonly int Target;
+        List<GameState> currentStates;
         public DieHardSolver(int a, int b, int c)
         {
-            currentStates = new List<DieHard>();
-            currentStates.Add(new DieHard(a, b));
+            currentStates = new List<GameState>();
+            currentStates.Add(new GameState(a, b, c));
             previousStates = new List<string>();
             previousStates.Add(currentStates.First().MyHash());
-            Target = c;
         }
         public bool Solve()
         {
-            var newStates = new List<DieHard>();
+            var newStates = new List<GameState>();
             while (true)
             {
                 newStates.Clear();
@@ -50,41 +48,13 @@
                 }
                 foreach (var current in currentStates)
                 {
-                    var a = new DieHard(current);
-                    a.FillFirstJug();
-                    var b = new DieHard(current);
-                    b.FillSecondJug();
-                    var c = new DieHard(current);
-                    c.PourFirstJugIntoSecond();
-                    var d = new DieHard(current);
-                    d.PourSecondJugIntoFirst();
-                    var e = new DieHard(current);
-                    e.EmptyFirstJug();
-                    var f = new DieHard(current);
-                    f.EmptySecondJug();
-                    if (AlreadyVisited(a) == false)
+                    var next = current.GetAllNewStates();
+                    foreach (var v in next)
                     {
-                        newStates.Add(a);
-                    }
-                    if (AlreadyVisited(b) == false)
-                    {
-                        newStates.Add(b);
-                    }
-                    if (AlreadyVisited(c) == false)
-                    {
-                        newStates.Add(c);
-                    }
-                    if (AlreadyVisited(d) == false)
-                    {
-                        newStates.Add(d);
-                    }
-                    if (AlreadyVisited(e) == false)
-                    {
-                        newStates.Add(e);
-                    }
-                    if (AlreadyVisited(f) == false)
-                    {
-                        newStates.Add(f);
+                        if (AlreadyVisited(v) == false)
+                        {
+                            newStates.Add(v);
+                        }
                     }
                 }
                 if (newStates.Count == 0)
@@ -103,7 +73,7 @@
                 }
             }
         }
-        private bool AlreadyVisited(DieHard d)
+        private bool AlreadyVisited(GameState d)
         {
             if (previousStates.Contains(d.MyHash()))
             {
@@ -115,7 +85,7 @@
         {
             foreach (var v in currentStates)
             {
-                if (v.Solved(Target))
+                if (v.Solved())
                 {
                     return true;
                 }
@@ -123,20 +93,14 @@
             return false;
         }
     }
-    internal class DieHard
+    internal class GameState
     {
         public readonly int firstJugCapacity;
         public readonly int secondJugCapacity;
-        public int FirstJug { get; private set; }
-        public int SecondJug { get; private set; }
-        public DieHard(DieHard toClone)
-        {
-            firstJugCapacity = toClone.firstJugCapacity;
-            secondJugCapacity = toClone.secondJugCapacity;
-            FirstJug = toClone.FirstJug;
-            SecondJug = toClone.SecondJug;
-        }
-        public DieHard(int firstJug, int secondJug)
+        int firstJug;
+        int secondJug;
+        int target;
+        public GameState(int firstJug, int secondJug, int target)
         {
             if (firstJug > secondJug)
             {
@@ -148,52 +112,76 @@
                 firstJugCapacity = firstJug;
                 secondJugCapacity = secondJug;
             }
+            this.target = target;
+        }
+        public List<GameState> GetAllNewStates()
+        {
+            var output = new List<GameState>();
+            GameState a = (GameState)this.MemberwiseClone();
+            a.FillFirstJug();
+            output.Add(a);
+            GameState b = (GameState)this.MemberwiseClone();
+            b.FillSecondJug();
+            output.Add(b);
+            GameState c = (GameState)this.MemberwiseClone();
+            c.PourFirstJugIntoSecond();
+            output.Add(c);
+            GameState d = (GameState)this.MemberwiseClone();
+            d.PourSecondJugIntoFirst();
+            output.Add(d);
+            GameState e = (GameState)this.MemberwiseClone();
+            e.EmptyFirstJug();
+            output.Add(e);
+            GameState f = (GameState)this.MemberwiseClone();
+            f.EmptySecondJug();
+            output.Add(f);
+            return output;
         }
         public void FillFirstJug()
         {
-            FirstJug = firstJugCapacity;
+            firstJug = firstJugCapacity;
         }
         public void FillSecondJug()
         {
-            SecondJug = secondJugCapacity;
+            secondJug = secondJugCapacity;
         }
         public void EmptyFirstJug()
         {
-            FirstJug = 0;
+            firstJug = 0;
         }
         public void EmptySecondJug()
         {
-            SecondJug = 0;
+            secondJug = 0;
         }
         public void PourFirstJugIntoSecond()
         {
-            int toAdd = secondJugCapacity - SecondJug;
+            int toAdd = secondJugCapacity - secondJug;
             if (toAdd <= 0)
             {
                 return;
             }
-            toAdd = Math.Min(toAdd, FirstJug);
-            SecondJug += toAdd;
-            FirstJug -= toAdd;
+            toAdd = Math.Min(toAdd, firstJug);
+            secondJug += toAdd;
+            firstJug -= toAdd;
         }
         public void PourSecondJugIntoFirst()
         {
-            int toAdd = firstJugCapacity - FirstJug;
+            int toAdd = firstJugCapacity - firstJug;
             if (toAdd <= 0)
             {
                 return;
             }
-            toAdd = Math.Min(toAdd, SecondJug);
-            FirstJug += toAdd;
-            SecondJug -= toAdd;
+            toAdd = Math.Min(toAdd, secondJug);
+            firstJug += toAdd;
+            secondJug -= toAdd;
         }
         public string MyHash()
         {
-            return $"{FirstJug.ToString()}_{SecondJug.ToString()}";
+            return $"{firstJug.ToString()}_{secondJug.ToString()}";
         }
-        public bool Solved(int target)
+        public bool Solved()
         {
-            if (FirstJug == target || SecondJug == target)
+            if (firstJug == target || secondJug == target)
             {
                 return true;
             }
